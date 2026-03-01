@@ -59,7 +59,8 @@ export default function SpeakingPracticePage() {
             speak(openerText, () => {
                 // 初回AIメッセージ後も自動録音を開始
                 if (autoListenRef.current && isSupported) {
-                    startListening()
+                    // TTS終了直後はブラウザのオーディオが安定しないため少し待つ
+                    setTimeout(() => startListening(true), 300)
                 }
             })
         }, 500)
@@ -125,7 +126,8 @@ export default function SpeakingPracticePage() {
                 speak(cleanResponse, () => {
                     // AI読み上げ完了後に自動録音開始（refで最新値を参照）
                     if (autoListenRef.current && isSupported && !hasCompleteMarker) {
-                        startListening()
+                        // TTS終了直後はブラウザのオーディオが安定しないため少し待つ
+                        setTimeout(() => startListening(true), 300)
                     }
                 })
             }

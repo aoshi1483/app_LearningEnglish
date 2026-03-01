@@ -24,6 +24,11 @@ export function SpeechProvider({ children }) {
     const autoStopSecondsRef = useRef(autoStopSeconds)
     const manualStopRef = useRef(false)
 
+    // AI応答後の自動録音用: 初回沈黙タイマーをスキップするフラグ
+    const noInitialTimerRef = useRef(false)
+    // ユーザーが発話したかどうかを追跡（onendでの再スタート判定に使用）
+    const hasSpeechRef = useRef(false)
+
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
         if (!SpeechRecognition) {
@@ -48,16 +53,13 @@ export function SpeechProvider({ children }) {
                 }
             }
             if (final) {
-                // 手動モード（continuous）では結果を蓄積
-                if (recordingModeRef.current === 'manual') {
-                    setTranscript(prev => prev ? prev + ' ' + final : final)
-                } else {
-                    setTranscript(prev => prev ? prev + ' ' + final : final)
-                }
+                hasSpeechRef.current = true
+                setTranscript(prev => prev ? prev + ' ' + final : final)
             }
             setInterimTranscript(interim)
 
             // 自動モード: 発話検知のたびにタイマーをリセット
+            // (noInitialTimer でも、話し始めたら通常通りタイマーを動かす)
             if (recordingModeRef.current === 'auto') {
                 if (autoStopTimerRef.current) clearTimeout(autoStopTimerRef.current)
                 autoStopTimerRef.current = setTimeout(() => {
@@ -73,24 +75,55 @@ export function SpeechProvider({ children }) {
                 autoStopTimerRef.current = null
             }
 
-            // 手動モードでユーザーが意図的に停止していない場合は自動再スタート
-            if (recordingModeRef.current === 'manual' && !manualStopRef.current) {
+            // ユーザーが意図的に停止した場合 → 終了
+            if (manualStopRef.current) {
+                setIsListening(false)
+                setInterimTranscript('')
+                manualStopRef.current = false
+                return
+            }
+
+            // 手動モード: ブラウザが勝手に切断した場合は自動再スタート
+            if (recordingModeRef.current === 'manual') {
                 try {
                     recognition.start()
-                    // isListening は true のまま維持
                     return
                 } catch (e) {
                     console.error('Failed to restart recognition:', e)
                 }
             }
 
+            // 自動モード + noInitialTimer + まだ発話していない場合:
+            // ユーザーを待ち続けるため再スタート
+            if (recordingModeRef.current === 'auto' && noInitialTimerRef.current && !hasSpeechRef.current) {
+                try {
+                    recognition.start()
+                    return
+                } catch (e) {
+                    console.error('Failed to restart recognition:', e)
+                }
+            }
+
+            // それ以外（自動モードで発話後にタイマーで停止した場合など）→ 終了
             setIsListening(false)
             setInterimTranscript('')
-            manualStopRef.current = false
+            noInitialTimerRef.current = false
         }
 
         recognition.onerror = (event) => {
             console.error('Speech recognition error:', event.error)
+
+            // no-speech エラー: noInitialTimer で待機中なら無視
+            // (onend が続いて発火し、そこで再スタートされる)
+            if (event.error === 'no-speech' && noInitialTimerRef.current && !hasSpeechRef.current && !manualStopRef.current) {
+                return
+            }
+
+            // aborted エラー: 意図的な中断の場合は無視
+            if (event.error === 'aborted') {
+                return
+            }
+
             setIsListening(false)
             setInterimTranscript('')
         }
@@ -103,8 +136,11 @@ export function SpeechProvider({ children }) {
         }
     }, [currentLanguage.speechLang])
 
-    const startListening = useCallback(() => {
+    const startListening = useCallback((noInitialTimer = false) => {
         if (!recognitionRef.current) return
+        noInitialTimerRef.current = noInitialTimer
+        hasSpeechRef.current = false
+        manualStopRef.current = false
         setTranscript('')
         setInterimTranscript('')
         // 前回のタイマーをクリア
@@ -114,18 +150,17 @@ export function SpeechProvider({ children }) {
         }
         try {
             recognitionRef.current.lang = currentLanguage.speechLang
-            // 両モードとも continuous=true にし、自動モードはタイマーで停止
             recognitionRef.current.continuous = true
-            manualStopRef.current = false
             recognitionRef.current.start()
             setIsListening(true)
 
-            // 自動モード: 開始直後に初回タイマーをセット（何も話さなかった場合用）
-            if (recordingModeRef.current === 'auto') {
+            // 自動モード かつ noInitialTimer でない場合: 初回タイマーをセット
+            if (recordingModeRef.current === 'auto' && !noInitialTimer) {
                 autoStopTimerRef.current = setTimeout(() => {
                     recognitionRef.current?.stop()
                 }, autoStopSecondsRef.current * 1000)
             }
+            // noInitialTimer の場合: 初回タイマーなし（ユーザーが話し始めるまで待つ）
         } catch (e) {
             console.error('Failed to start recognition:', e)
         }
@@ -135,6 +170,7 @@ export function SpeechProvider({ children }) {
         if (!recognitionRef.current) return
         // 意図的な停止であることをマーク
         manualStopRef.current = true
+        noInitialTimerRef.current = false
         // 自動停止タイマーをクリア
         if (autoStopTimerRef.current) {
             clearTimeout(autoStopTimerRef.current)
