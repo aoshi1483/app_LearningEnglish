@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Lightbulb, Send, Loader, Eye, EyeOff, CheckCircle, Mic } from 'lucide-react'
 import { useSpeech } from '../contexts/SpeechContext'
@@ -27,6 +27,8 @@ export default function SpeakingPracticePage() {
     const chatEndRef = useRef(null)
     const sessionStartRef = useRef(Date.now())
     const messageCountRef = useRef(0)
+    const autoListenRef = useRef(autoListenAfterAI)
+    useEffect(() => { autoListenRef.current = autoListenAfterAI }, [autoListenAfterAI])
 
     const lessons = LESSONS[categoryId] || []
     const lesson = lessons.find(l => l.id === lessonId)
@@ -54,7 +56,12 @@ export default function SpeakingPracticePage() {
                 isAI: true,
                 time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
             }])
-            speak(openerText)
+            speak(openerText, () => {
+                // 初回AIメッセージ後も自動録音を開始
+                if (autoListenRef.current && isSupported) {
+                    startListening()
+                }
+            })
         }, 500)
         return () => clearTimeout(timer)
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -116,8 +123,8 @@ export default function SpeakingPracticePage() {
             // エラーメッセージ（⚠️で始まる）は読み上げをスキップ
             if (!cleanResponse.startsWith('⚠')) {
                 speak(cleanResponse, () => {
-                    // AI読み上げ完了後に自動録音開始
-                    if (autoListenAfterAI && isSupported && !hasCompleteMarker) {
+                    // AI読み上げ完了後に自動録音開始（refで最新値を参照）
+                    if (autoListenRef.current && isSupported && !hasCompleteMarker) {
                         startListening()
                     }
                 })

@@ -162,12 +162,44 @@ export function SpeechProvider({ children }) {
         utterance.rate = 0.9
         utterance.pitch = 1.0
 
-        utterance.onstart = () => setIsSpeaking(true)
-        utterance.onend = () => {
+        // Chrome の onend 未発火バグ対策: 二重呼び出し防止付きハンドラー
+        let ended = false
+        let watchdogTimer = null
+        let resumeTimer = null
+
+        const handleEnd = () => {
+            if (ended) return
+            ended = true
+            if (watchdogTimer) { clearInterval(watchdogTimer); watchdogTimer = null }
+            if (resumeTimer) { clearInterval(resumeTimer); resumeTimer = null }
             setIsSpeaking(false)
             if (onEnd) onEnd()
         }
-        utterance.onerror = () => setIsSpeaking(false)
+
+        utterance.onstart = () => {
+            setIsSpeaking(true)
+
+            // Chrome workaround: 長い発話で音声が途中停止するのを防ぐ定期的な pause/resume
+            resumeTimer = setInterval(() => {
+                if (synthRef.current?.speaking) {
+                    synthRef.current.pause()
+                    synthRef.current.resume()
+                }
+            }, 14000)
+
+            // Watchdog: onend が発火しなかった場合のフォールバック検知
+            watchdogTimer = setInterval(() => {
+                if (!synthRef.current?.speaking) {
+                    handleEnd()
+                }
+            }, 500)
+        }
+        utterance.onend = handleEnd
+        utterance.onerror = () => {
+            if (watchdogTimer) { clearInterval(watchdogTimer); watchdogTimer = null }
+            if (resumeTimer) { clearInterval(resumeTimer); resumeTimer = null }
+            setIsSpeaking(false)
+        }
 
         synthRef.current.speak(utterance)
     }, [currentLanguage.speechLang])

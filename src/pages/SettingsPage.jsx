@@ -5,6 +5,7 @@ import { useSpeech } from '../contexts/SpeechContext'
 import { useAIProvider } from '../contexts/AIProviderContext'
 import { useProgress } from '../contexts/ProgressContext'
 import { AI_PROVIDERS, testAIConnection, fetchAvailableModels } from '../services/aiService'
+import pkg from '../../package.json'
 import './SettingsPage.css'
 
 export default function SettingsPage() {
@@ -476,7 +477,7 @@ export default function SettingsPage() {
                     </div>
                     <div className="settings-item">
                         <span>バージョン</span>
-                        <span className="settings-value">1.1.0</span>
+                        <span className="settings-value">{pkg.version}</span>
                     </div>
                     <div className="settings-item">
                         <span>AIエンジン</span>
