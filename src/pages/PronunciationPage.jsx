@@ -11,7 +11,7 @@ import './PronunciationPage.css'
 export default function PronunciationPage() {
     const { lessonId } = useParams()
     const navigate = useNavigate()
-    const { isListening, transcript, isSupported, startListening, stopListening, speak, setTranscript, recordingMode, setRecordingMode } = useSpeech()
+    const { isListening, transcript, isSupported, startListening, stopListening, speak, stopSpeaking, setTranscript, recordingMode, setRecordingMode } = useSpeech()
     const { completeLesson, addPerfectScore } = useProgress()
 
     const lesson = LESSONS.pronunciation?.find(l => l.id === lessonId)
@@ -23,6 +23,14 @@ export default function PronunciationPage() {
     const [hasAttempted, setHasAttempted] = useState(false)
 
     const currentPhrase = phrases[currentIndex]
+
+    // ページ離脱時にTTSと音声認識を停止
+    useEffect(() => {
+        return () => {
+            stopSpeaking()
+            stopListening()
+        }
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     useEffect(() => {
         if (transcript && !isListening) {

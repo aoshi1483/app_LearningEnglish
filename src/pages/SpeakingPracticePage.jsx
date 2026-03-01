@@ -42,6 +42,14 @@ export default function SpeakingPracticePage() {
         return value
     }
 
+    // ページ離脱時にTTSと音声認識を停止
+    useEffect(() => {
+        return () => {
+            stopSpeaking()
+            stopListening()
+        }
+    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
     // 初回AIメッセージ
     useEffect(() => {
         if (!scenario) return
