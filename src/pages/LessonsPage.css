@@ -1,0 +1,155 @@
+.lessons-page {
+    padding-top: var(--space-lg);
+}
+
+/* Header with back button */
+.lessons-header {
+    margin-bottom: var(--space-xl);
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-glass-heavy);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: var(--space-md);
+}
+
+.back-btn:hover {
+    background: var(--bg-glass);
+    border-color: var(--border-light);
+}
+
+.lessons-header-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.lessons-header-icon {
+    font-size: 36px;
+}
+
+.lessons-header-title {
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+}
+
+.lessons-header-desc {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+/* Lessons list */
+.lessons-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.lessons-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-3xl) var(--space-lg);
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: var(--font-size-sm);
+}
+
+.lessons-empty .emoji {
+    font-size: 48px;
+}
+
+/* All categories page */
+.lessons-page-header {
+    margin-bottom: var(--space-xl);
+}
+
+.lessons-page-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    margin-bottom: var(--space-xs);
+}
+
+.lessons-page-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.lessons-categories {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.lessons-category-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.lessons-cat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+}
+
+.lessons-cat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.lessons-cat-name {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+}
+
+.lessons-cat-desc {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+.lessons-cat-count {
+    font-size: var(--font-size-xs);
+    color: var(--text-accent);
+    font-weight: 600;
+}
+
+.lessons-page-header,
+.lessons-header-info {
+    /* セクション全体に幅の制限をかける場合 */
+    max-width: 1000px;
+    width: 100%;
+    /* これを追加するとしっかり 1000px まで広がります */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.lessons-category-card,
+.lessons-list {
+    /* セクション全体に幅の制限をかける場合 */
+    max-width: 700px;
+    width: 100%;
+    /* これを追加するとしっかり 700px まで広がります */
+    margin-left: auto;
+    margin-right: auto;
+}

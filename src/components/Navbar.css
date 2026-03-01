@@ -1,0 +1,71 @@
+.navbar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: var(--max-width);
+    z-index: 100;
+    padding: 0 var(--space-sm) var(--space-sm);
+}
+
+.navbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background: rgba(20, 20, 40, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-sm) var(--space-xs);
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 16px;
+    border-radius: var(--radius-xl);
+    color: var(--text-tertiary);
+    transition: all var(--transition-spring);
+    position: relative;
+    text-decoration: none;
+    border: 1px solid transparent;
+}
+
+.nav-item:hover {
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-item--active {
+    color: var(--primary-400);
+    background: rgba(99, 102, 241, 0.15);
+    /* うっすらとした青背景 */
+    border-color: rgba(99, 102, 241, 0.3);
+    /* 青い枠線 */
+    transform: translateY(-2px);
+    /* 少し上に浮き上がる */
+}
+
+.nav-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ドットのスタイルは削除しました */
+
+.nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.nav-item--active .nav-label {
+    color: var(--primary-400);
+}

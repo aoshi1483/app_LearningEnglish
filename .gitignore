@@ -1,0 +1,19 @@
+# 依存関係（npm installで入るもの）
+node_modules/
+
+# ビルド結果
+dist/
+
+# 環境変数（秘密情報）
+.env
+.env.local
+.env.*.local
+
+# エディタ設定
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

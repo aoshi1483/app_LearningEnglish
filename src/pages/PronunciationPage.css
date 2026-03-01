@@ -1,0 +1,212 @@
+.pronunciation-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    background: var(--gradient-hero);
+}
+
+.pron-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+}
+
+.pron-header-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
+}
+
+.pron-header-title {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+}
+
+.pron-header-progress {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+.pron-progress-bar {
+    height: 4px;
+    background: var(--bg-glass-heavy);
+}
+
+.pron-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-lg) var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+/* Prompt Card */
+.pron-prompt-card {
+    padding: var(--space-xl);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.pron-prompt-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.pron-prompt-text {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.pron-prompt-translation {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.pron-play-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--bg-glass-heavy);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    color: var(--text-accent);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.pron-play-btn:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary-500);
+}
+
+/* Score Result */
+.pron-result {
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    animation: pageEnter 0.4s ease-out;
+}
+
+.pron-score-circle {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pron-score-circle svg {
+    position: absolute;
+    inset: 0;
+}
+
+.pron-score-value {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    z-index: 1;
+}
+
+.pron-score-label {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+}
+
+.pron-user-text {
+    width: 100%;
+    padding: var(--space-md);
+    background: var(--bg-glass);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.pron-user-text-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-xs);
+}
+
+.pron-user-text-content {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+}
+
+.pron-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+}
+
+/* Mic Area */
+.pron-mic-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg) var(--space-md) var(--space-xl);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.pron-mic-area .mic-mode-toggle {
+    display: flex;
+    gap: 2px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-full);
+    padding: 2px;
+    border: 1px solid var(--border-subtle);
+}
+
+.pron-mic-area .mic-mode-option {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    background: none;
+    border: none;
+}
+
+.pron-mic-area .mic-mode-option:hover {
+    color: var(--text-secondary);
+}
+
+.pron-mic-area .mic-mode-option--active {
+    background: var(--primary-500);
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(99, 102, 241, 0.4);
+}
+
+/* もし個別に設定するのが大変な場合は、以下のようにまとめて記述も可能です */
+.pron-prompt-card,
+.pron-result,
+.pron-header-info {
+    /* セクション全体に幅の制限をかける場合 */
+    max-width: 800px;
+    width: 100%;
+    /* これを追加するとしっかり 800px まで広がります */
+    margin-left: auto;
+    margin-right: auto;
+}

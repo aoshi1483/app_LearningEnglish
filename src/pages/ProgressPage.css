@@ -1,0 +1,235 @@
+.progress-page {
+    padding-top: var(--space-xl);
+}
+
+.progress-header {
+    margin-bottom: var(--space-xl);
+}
+
+.progress-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    margin-bottom: var(--space-xs);
+}
+
+.progress-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-lg);
+}
+
+.stat-icon {
+    color: var(--warning-400);
+}
+
+.stat-icon--xp {
+    color: var(--primary-400);
+}
+
+.stat-icon--lessons {
+    color: var(--success-400);
+}
+
+.stat-icon--time {
+    color: var(--accent-400);
+}
+
+.stat-value {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+/* Weekly Chart */
+.weekly-chart {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.chart-bars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 140px;
+    gap: var(--space-sm);
+}
+
+.chart-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+.chart-bar-track {
+    width: 100%;
+    max-width: 32px;
+    height: 100px;
+    background: var(--bg-glass-heavy);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+.chart-bar-fill {
+    width: 100%;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-sm);
+    transition: height 0.6s ease;
+    min-height: 2px;
+}
+
+.chart-bar-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+.chart-bar-value {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+/* Streak Info */
+.streak-info {
+    display: flex;
+    align-items: center;
+    padding: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+
+.streak-info-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.streak-info-item>div {
+    display: flex;
+    flex-direction: column;
+}
+
+.streak-info-value {
+    font-size: var(--font-size-lg);
+    font-weight: 800;
+}
+
+.streak-info-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+}
+
+.streak-info-divider {
+    width: 1px;
+    height: 40px;
+    background: var(--border-subtle);
+    margin: 0 var(--space-md);
+}
+
+/* Achievements */
+.achievements-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+
+.achievement-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+}
+
+.achievement-card--unlocked {
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.achievement-icon {
+    font-size: 28px;
+}
+
+.achievement-icon-locked {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--bg-glass-heavy);
+    color: var(--text-tertiary);
+}
+
+.achievement-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.achievement-title {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+}
+
+.achievement-card--locked .achievement-title {
+    color: var(--text-tertiary);
+}
+
+.achievement-desc {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+}
+
+.achievement-star {
+    color: var(--warning-400);
+    animation: float 3s ease-in-out infinite;
+}
+
+.progress-header {
+    /* セクション全体に幅の制限をかける場合 */
+    max-width: 1000px;
+    width: 100%;
+    /* これを追加するとしっかり 1000px まで広がります */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* もし個別に設定するのが大変な場合は、以下のようにまとめて記述も可能です */
+.section-header,
+.stats-grid,
+.weekly-chart,
+.streak-info,
+.achievements-list {
+    /* セクション全体に幅の制限をかける場合 */
+    max-width: 700px;
+    width: 100%;
+    /* これを追加するとしっかり 700px まで広がります */
+    margin-left: auto;
+    margin-right: auto;
+}

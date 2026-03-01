@@ -1,0 +1,154 @@
+.chat-bubble {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    animation: bubbleIn 0.3s ease-out;
+}
+
+@keyframes bubbleIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.chat-bubble--ai {
+    justify-content: flex-start;
+}
+
+.chat-bubble--user {
+    justify-content: flex-end;
+}
+
+.chat-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-glass-heavy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+    border: 1px solid var(--border-subtle);
+}
+
+.chat-content {
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.chat-bubble--ai .chat-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) 4px;
+    padding: var(--space-sm) var(--space-md);
+}
+
+.chat-bubble--user .chat-content {
+    background: var(--gradient-primary);
+    border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
+    padding: var(--space-sm) var(--space-md);
+}
+
+.chat-text {
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+}
+
+.chat-footer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.chat-time {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+}
+
+.chat-play-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.chat-play-btn:hover {
+    background: var(--bg-glass-heavy);
+    color: var(--primary-400);
+}
+
+.chat-play-btn--playing {
+    color: var(--primary-400);
+    animation: pulse 1s infinite;
+}
+
+/* Hidden text (blur) */
+.chat-text--hidden {
+    filter: blur(6px);
+    cursor: pointer;
+    user-select: none;
+    transition: filter var(--transition-base);
+}
+
+.chat-text--hidden:hover {
+    filter: blur(4px);
+}
+
+/* Reveal toggle button */
+.chat-reveal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all var(--transition-fast);
+    padding: 0;
+}
+
+.chat-reveal-btn:hover {
+    transform: scale(1.15);
+}
+
+/* Retry button */
+.chat-retry-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+}
+
+.chat-retry-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    transform: scale(1.1);
+}

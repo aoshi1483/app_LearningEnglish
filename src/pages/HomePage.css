@@ -1,0 +1,244 @@
+.home-page {
+    padding-top: var(--space-xl);
+}
+
+/* Header */
+.home-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-xl);
+}
+
+.home-greeting {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.home-title {
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    line-height: 1.2;
+    background: linear-gradient(135deg, var(--text-primary), var(--primary-300));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.home-streak {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: var(--radius-full);
+    color: var(--warning-400);
+    flex-shrink: 0;
+}
+
+.home-streak-count {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+}
+
+.home-streak-label {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+}
+
+/* Daily Progress */
+.daily-progress {
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.daily-progress-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-sm);
+}
+
+.daily-progress-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.daily-progress-icon {
+    color: var(--primary-400);
+}
+
+.daily-progress-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.daily-progress-xp {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--warning-400);
+}
+
+.daily-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.daily-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+/* Quick Action */
+.quick-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    background: var(--gradient-primary);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-xl);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-glow);
+}
+
+.quick-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+}
+
+.quick-action-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.quick-action-emoji {
+    font-size: 28px;
+}
+
+.quick-action-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.quick-action-title {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: white;
+}
+
+.quick-action-desc {
+    font-size: var(--font-size-xs);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Category Grid */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
+}
+
+.category-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg) var(--space-md);
+    text-align: center;
+    cursor: pointer;
+}
+
+.category-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.category-name {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.category-desc {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    line-height: 1.3;
+}
+
+/* Motivation Card */
+.motivation-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+
+.motivation-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.motivation-text {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.motivation-text strong {
+    color: var(--primary-300);
+}
+
+/* HomePage.css に追加する場合 */
+.home-page .section-header {
+    max-width: 700px;
+    /* 他の要素と合わせる場合 */
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+.home-header {
+    /* セクション全体に幅の制限をかける場合 */
+    max-width: 1000px;
+    width: 100%;
+    /* これを追加するとしっかり 1000px まで広がります */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.daily-progress,
+.quick-action,
+.category-grid,
+.motivation-card {
+    /* セクション全体に幅の制限をかける場合 */
+    max-width: 700px;
+    width: 100%;
+    /* これを追加するとしっかり 700px まで広がります */
+    margin-left: auto;
+    margin-right: auto;
+}
