@@ -4,8 +4,15 @@ const ProgressContext = createContext(null)
 
 const STORAGE_KEY = 'lingoflow_progress'
 
+function formatDateLocal(date) {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
 function getToday() {
-    return new Date().toISOString().split('T')[0] // 'YYYY-MM-DD'
+    return formatDateLocal(new Date())
 }
 
 function getDayOfWeek() {
@@ -20,7 +27,7 @@ function getWeekStartDate() {
     const sunday = new Date(now)
     sunday.setDate(now.getDate() - diff)
     sunday.setHours(0, 0, 0, 0)
-    return sunday.toISOString().split('T')[0]
+    return formatDateLocal(sunday)
 }
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
@@ -75,6 +82,7 @@ function loadProgress() {
 
 export function ProgressProvider({ children }) {
     const [progress, setProgress] = useState(loadProgress)
+    const [currentDate, setCurrentDate] = useState(getToday)
 
     // localStorageへ永続化
     useEffect(() => {
@@ -82,6 +90,25 @@ export function ProgressProvider({ children }) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(progress))
         } catch { /* ignore */ }
     }, [progress])
+
+    // 画面を開きっぱなしで午前0時を跨いだ場合のリセット対応
+    useEffect(() => {
+        const updateDate = () => {
+            const today = getToday()
+            if (currentDate !== today) {
+                setCurrentDate(today)
+            }
+        }
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') updateDate()
+        }
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        const intervalId = setInterval(updateDate, 60000)
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+            clearInterval(intervalId)
+        }
+    }, [currentDate])
 
     // ストリーク更新（アプリ起動時に呼ばれる）
     useEffect(() => {
@@ -91,7 +118,7 @@ export function ProgressProvider({ children }) {
 
             const yesterday = new Date()
             yesterday.setDate(yesterday.getDate() - 1)
-            const yesterdayStr = yesterday.toISOString().split('T')[0]
+            const yesterdayStr = formatDateLocal(yesterday)
 
             let newStreak = prev.streak
             if (prev.lastActiveDate === yesterdayStr) {
@@ -125,7 +152,7 @@ export function ProgressProvider({ children }) {
             if (prev.lastActiveDate !== today) {
                 const yesterday = new Date()
                 yesterday.setDate(yesterday.getDate() - 1)
-                const yesterdayStr = yesterday.toISOString().split('T')[0]
+                const yesterdayStr = formatDateLocal(yesterday)
                 if (prev.lastActiveDate === yesterdayStr || !prev.lastActiveDate) {
                     newStreak = prev.streak + 1
                 } else {
@@ -193,6 +220,7 @@ export function ProgressProvider({ children }) {
     return (
         <ProgressContext.Provider value={{
             ...progress,
+            todayXp: progress.lastActiveDate === currentDate ? progress.todayXp : 0,
             addXp,
             completeLesson,
             addSpeakingMinutes,
