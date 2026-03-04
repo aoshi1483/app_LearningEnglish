@@ -137,9 +137,18 @@ export function ProgressProvider({ children }) {
         setProgress(prev => {
             const today = getToday()
             const dayIndex = getDayOfWeek()
+            const currentWeekStart = getWeekStartDate()
 
             // 週データ更新
-            const weeklyData = [...prev.weeklyData]
+            let weeklyData = [...prev.weeklyData]
+            let weekStartDate = prev.weekStartDate
+
+            // 週が変わっていたらリセット
+            if (!weekStartDate || weekStartDate !== currentWeekStart) {
+                weeklyData = DAY_LABELS.map(day => ({ day, xp: 0 }))
+                weekStartDate = currentWeekStart
+            }
+
             // 日付が変わった場合、今日の曜日のXPをリセットしてから加算
             if (prev.lastActiveDate !== today) {
                 weeklyData[dayIndex] = { ...weeklyData[dayIndex], xp: amount }
@@ -170,6 +179,7 @@ export function ProgressProvider({ children }) {
                 longestStreak: newLongestStreak,
                 lastActiveDate: today,
                 weeklyData,
+                weekStartDate,
             }
         })
     }, [])
