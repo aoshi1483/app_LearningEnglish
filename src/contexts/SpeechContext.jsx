@@ -16,6 +16,8 @@ export function SpeechProvider({ children }) {
     const [autoStopSeconds, setAutoStopSeconds] = useState(() => Number(localStorage.getItem('lingoflow_auto_stop_seconds')) || 3)
     const [hideTextInChat, setHideTextInChat] = useState(() => localStorage.getItem('lingoflow_hide_text_in_chat') === 'true')
     const [autoListenAfterAI, setAutoListenAfterAI] = useState(() => localStorage.getItem('lingoflow_auto_listen_after_ai') === 'true')
+    const [autoCorrect, setAutoCorrect] = useState(() => localStorage.getItem('lingoflow_auto_correct') === 'true')
+    const [coachingMode, setCoachingMode] = useState(() => localStorage.getItem('lingoflow_coaching_mode') === 'true')
 
     const recognitionRef = useRef(null)
     const synthRef = useRef(null)
@@ -280,6 +282,16 @@ export function SpeechProvider({ children }) {
             setAutoListenAfterAI: (val) => {
                 setAutoListenAfterAI(val)
                 localStorage.setItem('lingoflow_auto_listen_after_ai', val)
+            },
+            autoCorrect,
+            setAutoCorrect: (val) => {
+                setAutoCorrect(val)
+                localStorage.setItem('lingoflow_auto_correct', val)
+            },
+            coachingMode,
+            setCoachingMode: (val) => {
+                setCoachingMode(val)
+                localStorage.setItem('lingoflow_coaching_mode', val)
             },
         }}>
             {children}

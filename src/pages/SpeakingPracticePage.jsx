@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Lightbulb, Send, Loader, Eye, EyeOff, CheckCircle, Mic } from 'lucide-react'
+import { ArrowLeft, Lightbulb, Send, Loader, Eye, EyeOff, CheckCircle, Mic, Wand2, X, GraduationCap } from 'lucide-react'
 import { useSpeech } from '../contexts/SpeechContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAIProvider } from '../contexts/AIProviderContext'
 import { useProgress } from '../contexts/ProgressContext'
 import { LESSONS, CATEGORIES } from '../data/lessons'
-import { getAIResponse } from '../services/aiService'
+import { getAIResponse, correctTranscript } from '../services/aiService'
 import ChatBubble from '../components/ChatBubble'
 import MicButton from '../components/MicButton'
 import './SpeakingPracticePage.css'
@@ -14,7 +14,7 @@ import './SpeakingPracticePage.css'
 export default function SpeakingPracticePage() {
     const { categoryId, lessonId } = useParams()
     const navigate = useNavigate()
-    const { isListening, transcript, interimTranscript, isSupported, startListening, stopListening, speak, stopSpeaking, setTranscript, isSpeaking, recordingMode, setRecordingMode, hideTextInChat, setHideTextInChat, autoListenAfterAI, setAutoListenAfterAI } = useSpeech()
+    const { isListening, transcript, interimTranscript, isSupported, startListening, stopListening, speak, stopSpeaking, setTranscript, isSpeaking, recordingMode, setRecordingMode, hideTextInChat, setHideTextInChat, autoListenAfterAI, setAutoListenAfterAI, autoCorrect, setAutoCorrect, coachingMode, setCoachingMode } = useSpeech()
     const { targetLang } = useLanguage()
     const { provider, getActiveApiKey, getSelectedModel } = useAIProvider()
     const { completeLesson, addSpeakingMinutes, addXp, username } = useProgress()
@@ -24,11 +24,16 @@ export default function SpeakingPracticePage() {
     const [textInput, setTextInput] = useState('')
     const [isAiThinking, setIsAiThinking] = useState(false)
     const [isLessonComplete, setIsLessonComplete] = useState(false)
+    const [pendingTranscript, setPendingTranscript] = useState('')
+    const [isCorrecting, setIsCorrecting] = useState(false)
     const chatEndRef = useRef(null)
     const sessionStartRef = useRef(Date.now())
     const messageCountRef = useRef(0)
     const autoListenRef = useRef(autoListenAfterAI)
+    const autoCorrectRef = useRef(autoCorrect)
+    const pendingInputRef = useRef(null)
     useEffect(() => { autoListenRef.current = autoListenAfterAI }, [autoListenAfterAI])
+    useEffect(() => { autoCorrectRef.current = autoCorrect }, [autoCorrect])
 
     const lessons = LESSONS[categoryId] || []
     const lesson = lessons.find(l => l.id === lessonId)
@@ -75,18 +80,40 @@ export default function SpeakingPracticePage() {
         return () => clearTimeout(timer)
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-    // transcript が更新されたらメッセージ送信
+    // transcript が更新されたらプレビューにセット（即送信しない）
     useEffect(() => {
         if (transcript && !isListening) {
-            handleSendMessage(transcript)
+            const raw = transcript
             setTranscript('')
+            setPendingTranscript(raw)
+
+            // AI自動補正がONなら補正を実行
+            if (autoCorrectRef.current) {
+                setIsCorrecting(true)
+                correctTranscript(
+                    provider, raw, messages, targetLang, scenario,
+                    getActiveApiKey(), getSelectedModel()
+                ).then(corrected => {
+                    setPendingTranscript(corrected)
+                    setIsCorrecting(false)
+                }).catch(() => {
+                    setIsCorrecting(false)
+                })
+            }
         }
     }, [transcript, isListening]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // pendingTranscript が表示されたら入力にフォーカス
+    useEffect(() => {
+        if (pendingTranscript && !isCorrecting && pendingInputRef.current) {
+            pendingInputRef.current.focus()
+        }
+    }, [pendingTranscript, isCorrecting])
 
     // スクロール
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [messages, interimTranscript, isAiThinking])
+    }, [messages, interimTranscript, isAiThinking, pendingTranscript])
 
     const handleSendMessage = async (text) => {
         if (!text.trim() || isAiThinking) return
@@ -115,18 +142,28 @@ export default function SpeakingPracticePage() {
                 scenario,
                 getActiveApiKey(),
                 getSelectedModel(),
-                username
+                username,
+                coachingMode
             )
 
             // [LESSON_COMPLETE] マーカーを検出・除去
             const hasCompleteMarker = aiResponse.includes('[LESSON_COMPLETE]')
-            const cleanResponse = aiResponse.replace(/\[LESSON_COMPLETE\]/g, '').trim()
+            let cleanResponse = aiResponse.replace(/\[LESSON_COMPLETE\]/g, '').trim()
+
+            // [COACHING]...[/COACHING] マーカーを抽出
+            let coachingText = ''
+            const coachingMatch = cleanResponse.match(/\[COACHING\]([\s\S]*?)\[\/COACHING\]/)
+            if (coachingMatch) {
+                coachingText = coachingMatch[1].trim()
+                cleanResponse = cleanResponse.replace(/\[COACHING\][\s\S]*?\[\/COACHING\]/, '').trim()
+            }
 
             setMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 text: cleanResponse,
                 isAI: true,
                 time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+                coaching: coachingText || undefined,
             }])
 
             // エラーメッセージ（⚠️で始まる）は読み上げをスキップ
@@ -164,6 +201,29 @@ export default function SpeakingPracticePage() {
         }
     }
 
+    // プレビューから送信
+    const handleSendPending = () => {
+        if (!pendingTranscript.trim() || isAiThinking) return
+        const text = pendingTranscript.trim()
+        setPendingTranscript('')
+        handleSendMessage(text)
+    }
+
+    // プレビュー破棄
+    const handleDiscardPending = () => {
+        setPendingTranscript('')
+    }
+
+    // プレビューでEnterキー送信
+    const handlePendingKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            handleSendPending()
+        } else if (e.key === 'Escape') {
+            handleDiscardPending()
+        }
+    }
+
     const handleMicToggle = () => {
         if (isListening) {
             stopListening()
@@ -178,6 +238,23 @@ export default function SpeakingPracticePage() {
             handleSendMessage(textInput)
             setTextInput('')
         }
+    }
+
+    // 送信済みメッセージの編集
+    const handleEditMessage = (msgId, newText) => {
+        if (isAiThinking || isSpeaking) return
+        // 該当メッセージのテキストを更新し、以降を削除
+        setMessages(prev => {
+            const idx = prev.findIndex(m => m.id === msgId)
+            if (idx === -1) return prev
+            const updated = prev.slice(0, idx)
+            // 編集済みメッセージは追加しない（handleSendMessageで追加される）
+            return updated
+        })
+        setIsLessonComplete(false)
+        messageCountRef.current = Math.max(0, messageCountRef.current - 1)
+        // 新テキストで再送信
+        handleSendMessage(newText)
     }
 
     const handleRetry = (msgId) => {
@@ -212,13 +289,13 @@ export default function SpeakingPracticePage() {
                 </button>
                 <div className="speaking-header-info">
                     <span className="emoji">{category?.icon}</span>
-                    <div style={{ flex: 1 }}> {/* ← ここに flex: 1 を追加してボタンを右に押し出します */}
+                    <div style={{ flex: 1 }}>
                         <h1 className="speaking-header-title">{lesson?.title || 'スピーキング練習'}</h1>
                         {scenario?.aiRole && (
                             <p className="speaking-header-role">🤖 {getLocalized(scenario.aiRole)}</p>
                         )}
                     </div>
-                    {/* --- ヒントボタンをここ（infoの中）に移動 --- */}
+                    {/* ヒントボタン */}
                     {scenario?.hints && (
                         <button
                             className={`hint-btn ${showHints ? 'hint-btn--active' : ''}`}
@@ -240,6 +317,20 @@ export default function SpeakingPracticePage() {
                         title={autoListenAfterAI ? '自動録音OFF' : '自動録音ON'}
                     >
                         <Mic size={18} />
+                    </button>
+                    <button
+                        className={`hint-btn ${autoCorrect ? 'hint-btn--active' : ''}`}
+                        onClick={() => setAutoCorrect(!autoCorrect)}
+                        title={autoCorrect ? 'AI文字起こし補正OFF' : 'AI文字起こし補正ON'}
+                    >
+                        <Wand2 size={18} />
+                    </button>
+                    <button
+                        className={`hint-btn ${coachingMode ? 'hint-btn--coaching' : ''}`}
+                        onClick={() => setCoachingMode(!coachingMode)}
+                        title={coachingMode ? 'コーチングモードOFF' : 'コーチングモードON'}
+                    >
+                        <GraduationCap size={18} />
                     </button>
                 </div>
             </div>
@@ -272,7 +363,9 @@ export default function SpeakingPracticePage() {
                             isAI={msg.isAI}
                             timestamp={msg.time}
                             hideText={hideTextInChat}
+                            coaching={msg.coaching}
                             onRetry={!msg.isAI && !isAiThinking && !isSpeaking ? () => handleRetry(msg.id) : undefined}
+                            onEdit={!msg.isAI && !isAiThinking && !isSpeaking ? (newText) => handleEditMessage(msg.id, newText) : undefined}
                         />
                     </div>
                 ))}
@@ -315,6 +408,46 @@ export default function SpeakingPracticePage() {
                         {!isSupported && (
                             <div className="speech-warning">
                                 ⚠️ このブラウザは音声認識に対応していません。テキスト入力をご利用ください。
+                            </div>
+                        )}
+
+                        {/* 送信前プレビューバー */}
+                        {pendingTranscript && (
+                            <div className="transcript-preview">
+                                <div className="transcript-preview-header">
+                                    <span className="transcript-preview-label">
+                                        {isCorrecting ? '🪄 AI補正中...' : '📝 送信前プレビュー'}
+                                    </span>
+                                    <button className="transcript-preview-discard" onClick={handleDiscardPending} title="破棄">
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                                {isCorrecting ? (
+                                    <div className="transcript-correcting">
+                                        <Loader size={16} className="spin" />
+                                        <span>文脈を分析して補正しています...</span>
+                                    </div>
+                                ) : (
+                                    <div className="transcript-preview-body">
+                                        <input
+                                            ref={pendingInputRef}
+                                            type="text"
+                                            className="transcript-preview-input"
+                                            value={pendingTranscript}
+                                            onChange={(e) => setPendingTranscript(e.target.value)}
+                                            onKeyDown={handlePendingKeyDown}
+                                            disabled={isAiThinking}
+                                        />
+                                        <button
+                                            className="transcript-preview-send"
+                                            onClick={handleSendPending}
+                                            disabled={!pendingTranscript.trim() || isAiThinking}
+                                            title="送信"
+                                        >
+                                            <Send size={16} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 

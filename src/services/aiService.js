@@ -157,7 +157,7 @@ export async function fetchAvailableModels(provider, apiKey) {
 /**
  * 学習言語に応じたシステムプロンプトを生成
  */
-function buildSystemPrompt(targetLang, scenario, username = 'User') {
+function buildSystemPrompt(targetLang, scenario, username = 'User', coachingMode = false) {
     const langNames = {
         en: 'English', es: 'Spanish', fr: 'French', zh: 'Chinese', ko: 'Korean',
     }
@@ -173,6 +173,33 @@ IMPORTANT RULES:
 - Encourage the user and make the conversation enjoyable.
 - Ask open-ended follow-up questions to keep the conversation going.
 - Adapt language complexity to the user's level.`
+
+    if (coachingMode) {
+        prompt += `\n\nCOACHING MODE (VERY IMPORTANT):
+After your natural conversation response, you MUST add a coaching feedback section using the exact markers [COACHING] and [/COACHING].
+Inside the coaching section, analyze the user's message for:
+1. Grammar mistakes — mark with "❌" and provide the correction with "✅", plus a brief explanation in Japanese.
+2. Better expressions — mark with "💡" and suggest more natural/advanced alternatives.
+3. Vocabulary tips — mark with "📚" for useful related words or phrases.
+
+Format example:
+[COACHING]
+❌ "I goed" → ✅ "I went"
+go の過去形は went です（不規則動詞）
+
+💡 より自然な表現: "I stopped by the store yesterday."
+「お店に行った」をよりカジュアルに表現できます
+
+📚 関連表現: "go shopping" / "run errands"
+[/COACHING]
+
+Rules for coaching:
+- If the user's ${lang} is perfect, still provide a 💡 tip with an advanced alternative or useful expression.
+- Keep explanations brief and in Japanese so the learner understands.
+- Always include the [COACHING] and [/COACHING] markers even if there are no errors (provide a 💡 tip instead).
+- The coaching section must come AFTER your conversational response.
+- Do NOT mix coaching feedback into your conversational response.`
+    }
 
     if (scenario) {
         const situation = typeof scenario.situation === 'object'
@@ -331,7 +358,7 @@ async function callOpenAI(userText, history, systemPrompt, apiKey, model) {
  * @param {string} model - モデル名（オプション）
  * @returns {Promise<string>}
  */
-export async function getAIResponse(provider, userText, conversationHistory = [], targetLang = 'en', scenario = null, apiKey = '', model = '', username = 'User') {
+export async function getAIResponse(provider, userText, conversationHistory = [], targetLang = 'en', scenario = null, apiKey = '', model = '', username = 'User', coachingMode = false) {
     // クロージャの不整合でapiKeyが空で渡された場合のフォールバック
     let resolvedKey = apiKey ? apiKey.trim() : '';
 
@@ -366,7 +393,7 @@ export async function getAIResponse(provider, userText, conversationHistory = []
         return '⚠️ APIキーが設定されていません。設定ページ（⚙️）からAPIキーを入力してください。'
     }
 
-    const systemPrompt = buildSystemPrompt(targetLang, scenario, username)
+    const systemPrompt = buildSystemPrompt(targetLang, scenario, username, coachingMode)
 
     try {
         if (provider === 'openai') {
@@ -387,6 +414,110 @@ export async function getAIResponse(provider, userText, conversationHistory = []
             return '⚠️ タイムアウトです。ネットワーク接続を確認してもう一度お試しください。'
         }
         return `⚠️ エラーが発生しました: ${error.message}`
+    }
+}
+
+/**
+ * 音声認識テキストをAIで自動補正
+ * 会話の文脈を考慮して、誤認識と思われる部分を修正する。
+ *
+ * @param {string} provider - 'gemini' | 'openai'
+ * @param {string} rawTranscript - 音声認識の生テキスト
+ * @param {Array} conversationHistory - 過去の会話
+ * @param {string} targetLang - 学習対象言語コード
+ * @param {Object} scenario - シナリオ情報
+ * @param {string} apiKey - APIキー
+ * @param {string} model - モデル名
+ * @returns {Promise<string>} - 修正後のテキスト
+ */
+export async function correctTranscript(provider, rawTranscript, conversationHistory = [], targetLang = 'en', scenario = null, apiKey = '', model = '') {
+    // APIキー解決（getAIResponseと同じフォールバック）
+    let resolvedKey = apiKey ? apiKey.trim() : '';
+    if (!resolvedKey) {
+        try {
+            const savedKeys = localStorage.getItem('lingoflow_api_keys');
+            if (savedKeys) {
+                const parsed = JSON.parse(savedKeys);
+                const pid = provider || localStorage.getItem('lingoflow_ai_provider') || 'gemini';
+                if (parsed && parsed[pid]) resolvedKey = parsed[pid];
+            }
+        } catch { /* ignore */ }
+    }
+    if (!resolvedKey) {
+        if (provider === 'gemini' || !provider) {
+            resolvedKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+        } else if (provider === 'openai') {
+            resolvedKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+        }
+    }
+    if (!resolvedKey) return rawTranscript; // キーがなければ元テキストをそのまま返す
+
+    const langNames = { en: 'English', es: 'Spanish', fr: 'French', zh: 'Chinese', ko: 'Korean' }
+    const lang = langNames[targetLang] || 'English'
+
+    // 会話履歴を文字列にまとめる
+    const historyText = conversationHistory
+        .slice(-6) // 直近6メッセージ
+        .map(m => `${m.isAI ? 'AI' : 'User'}: ${m.text}`)
+        .join('\n')
+
+    let contextInfo = ''
+    if (scenario) {
+        const situation = typeof scenario.situation === 'object'
+            ? (scenario.situation[targetLang] || scenario.situation['en'] || '')
+            : (scenario.situation || '')
+        contextInfo = `Scenario: ${situation}`
+    }
+
+    const correctionPrompt = `You are a speech recognition error corrector. The user is practicing ${lang} conversation.
+
+${contextInfo}
+
+Recent conversation:
+${historyText}
+
+The following text was produced by speech recognition and may contain errors (wrong words, mishearing, etc.). 
+Correct any speech recognition errors based on the conversation context. Only fix clear recognition mistakes — do NOT change the user's intended meaning, grammar style, or add words they didn't say.
+If the text looks correct, return it unchanged.
+
+IMPORTANT: Return ONLY the corrected text. No explanations, no quotes, no prefixes.
+
+Speech recognition result: ${rawTranscript}`
+
+    try {
+        if (provider === 'openai') {
+            const url = 'https://api.openai.com/v1/chat/completions'
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${resolvedKey}` },
+                body: JSON.stringify({
+                    model: model || AI_PROVIDERS.openai.defaultModel,
+                    messages: [{ role: 'user', content: correctionPrompt }],
+                    temperature: 0.3,
+                    max_tokens: 256,
+                }),
+            })
+            if (!res.ok) return rawTranscript
+            const data = await res.json()
+            return data?.choices?.[0]?.message?.content?.trim() || rawTranscript
+        } else {
+            const geminiModel = model || AI_PROVIDERS.gemini.defaultModel
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${resolvedKey}`
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: correctionPrompt }] }],
+                    generationConfig: { temperature: 0.3, maxOutputTokens: 256 },
+                }),
+            })
+            if (!res.ok) return rawTranscript
+            const data = await res.json()
+            return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || rawTranscript
+        }
+    } catch (error) {
+        console.error('correctTranscript error:', error)
+        return rawTranscript // エラー時は元テキストを返す
     }
 }
 
