@@ -72,11 +72,7 @@
     border-color: rgba(245, 158, 11, 0.3);
 }
 
-.hint-btn--coaching {
-    background: rgba(139, 92, 246, 0.2);
-    color: #a78bfa;
-    border-color: rgba(139, 92, 246, 0.4);
-}
+
 
 /* Situation */
 .speaking-situation {
@@ -438,6 +434,36 @@
 .lesson-complete-card .btn-primary:hover {
     transform: scale(1.05);
     box-shadow: var(--shadow-glow);
+}
+
+.lesson-complete-actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.lesson-complete-card .btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    background: var(--bg-glass-heavy);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-size: var(--font-size-sm);
+}
+
+.lesson-complete-card .btn-secondary:hover {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary-500);
+    color: var(--primary-400);
+    transform: scale(1.03);
 }
 
 /* Transcript Preview Bar */

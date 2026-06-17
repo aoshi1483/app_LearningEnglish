@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Lightbulb, Send, Loader, Eye, EyeOff, CheckCircle, Mic, Wand2, X, GraduationCap } from 'lucide-react'
+import { ArrowLeft, Lightbulb, Send, Loader, Eye, EyeOff, CheckCircle, Mic, Wand2, X, GraduationCap, Download } from 'lucide-react'
 import { useSpeech } from '../contexts/SpeechContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useAIProvider } from '../contexts/AIProviderContext'
@@ -34,6 +34,25 @@ export default function SpeakingPracticePage() {
     const pendingInputRef = useRef(null)
     useEffect(() => { autoListenRef.current = autoListenAfterAI }, [autoListenAfterAI])
     useEffect(() => { autoCorrectRef.current = autoCorrect }, [autoCorrect])
+
+    // AI発声中は録音を自動停止
+    useEffect(() => {
+        if (isSpeaking && isListening) {
+            stopListening()
+        }
+    }, [isSpeaking]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Enterキーで録音停止
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter' && isListening && !e.target.closest('input, textarea, form')) {
+                e.preventDefault()
+                stopListening()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [isListening, stopListening])
 
     const lessons = LESSONS[categoryId] || []
     const lesson = lessons.find(l => l.id === lessonId)
@@ -177,14 +196,15 @@ export default function SpeakingPracticePage() {
                 })
             }
             messageCountRef.current += 1
+            // 1往復ごとに1XPを加算
+            addXp(1)
 
             // レッスン完了検知
             if (hasCompleteMarker) {
                 const minutesSpent = Math.max(1, Math.round((Date.now() - sessionStartRef.current) / 60000))
                 addSpeakingMinutes(minutesSpent)
                 if (lesson) {
-                    const xp = lesson.xp || Math.min(10 + messageCountRef.current * 5, 50)
-                    completeLesson(lesson.id, xp)
+                    completeLesson(lesson.id, 0) // レッスン完了記録（XPは都度加算済み）
                 }
                 setIsLessonComplete(true)
             }
@@ -271,17 +291,47 @@ export default function SpeakingPracticePage() {
         messageCountRef.current = Math.max(0, messageCountRef.current - 1)
     }
 
+    // 会話履歴をテキストファイルとしてダウンロード
+    const handleSaveHistory = () => {
+        const lines = []
+        lines.push(`=== 会話履歴 ==="`)
+        lines.push(`レッスン: ${lesson?.title || 'スピーキング練習'}`)
+        lines.push(`日時: ${new Date().toLocaleString('ja-JP')}`)
+        lines.push(`会話回数: ${messageCountRef.current} 往復`)
+        lines.push(`獲得XP: ${messageCountRef.current} XP`)
+        lines.push('')
+        messages.forEach(msg => {
+            const role = msg.isAI ? '🤖 AI' : '👤 You'
+            lines.push(`[${msg.time}] ${role}:`)
+            lines.push(msg.text)
+            if (msg.coaching) {
+                lines.push('  📝 フィードバック:')
+                msg.coaching.split('\n').filter(l => l.trim()).forEach(l => {
+                    lines.push('  ' + l.trim())
+                })
+            }
+            lines.push('')
+        })
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        const dateStr = new Date().toISOString().slice(0, 10)
+        a.download = `chat_${lesson?.id || 'lesson'}_${dateStr}.txt`
+        a.click()
+        URL.revokeObjectURL(url)
+    }
+
     return (
         <div className="speaking-page">
             {/* Header */}
             <div className="speaking-header">
                 <button className="back-btn" onClick={() => {
-                    // セッション終了時にXPと会話時間を記録
+                    // セッション終了時に会話時間を記録
                     const minutesSpent = Math.max(1, Math.round((Date.now() - sessionStartRef.current) / 60000))
                     addSpeakingMinutes(minutesSpent)
                     if (messageCountRef.current > 0 && lesson) {
-                        const xp = lesson.xp || Math.min(10 + messageCountRef.current * 5, 50)
-                        completeLesson(lesson.id, xp)
+                        completeLesson(lesson.id, 0) // レッスン完了記録
                     }
                     navigate(-1)
                 }}>
@@ -326,7 +376,7 @@ export default function SpeakingPracticePage() {
                         <Wand2 size={18} />
                     </button>
                     <button
-                        className={`hint-btn ${coachingMode ? 'hint-btn--coaching' : ''}`}
+                        className={`hint-btn ${coachingMode ? 'hint-btn--active' : ''}`}
                         onClick={() => setCoachingMode(!coachingMode)}
                         title={coachingMode ? 'コーチングモードOFF' : 'コーチングモードON'}
                     >
@@ -397,11 +447,17 @@ export default function SpeakingPracticePage() {
                         <CheckCircle size={32} className="lesson-complete-icon" />
                         <h3 className="lesson-complete-title">レッスン完了！ 🎉</h3>
                         <p className="lesson-complete-desc">
-                            {lesson?.xp || Math.min(10 + messageCountRef.current * 5, 50)} XP 獲得しました！
+                            {messageCountRef.current} XP 獲得しました！（{messageCountRef.current} 往復）
                         </p>
-                        <button className="btn btn-primary" onClick={() => navigate(-1)}>
-                            レッスン一覧に戻る
-                        </button>
+                        <div className="lesson-complete-actions">
+                            <button className="btn btn-secondary" onClick={handleSaveHistory}>
+                                <Download size={16} />
+                                会話履歴を保存
+                            </button>
+                            <button className="btn btn-primary" onClick={() => navigate(-1)}>
+                                レッスン一覧に戻る
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -492,7 +548,7 @@ export default function SpeakingPracticePage() {
                                     : isSpeaking
                                         ? 'AIの声を再生中...'
                                         : isListening
-                                            ? (recordingMode === 'auto' ? '聞き取り中...（自動停止）' : '話し終えたらボタンを押して送信')
+                                            ? (recordingMode === 'auto' ? '聞き取り中...（自動停止）' : '話し終えたらボタンかEnterで送信')
                                             : 'タップして話す'}
                             </p>
                             {isSpeaking && (
